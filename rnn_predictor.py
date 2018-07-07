@@ -1,20 +1,13 @@
-import sys
-import pdb
-import json
-import keras
-from keras import backend as K
-import sklearn
-import sklearn.preprocessing
-import sklearn.linear_model
-import argparse
-import numpy as np
-import scipy
-import scipy.stats
-import pandas as pd
 import dateutil.parser
-import datetime
-from dateutil.relativedelta import relativedelta
+import keras
+import numpy as np
+import pandas as pd
+import sklearn
+import sklearn.linear_model
+import sklearn.preprocessing
 import tensorflow as tf
+from keras import backend as K
+
 
 # Each instance is created for each incoming request
 class RNNPredictor(object):
@@ -41,6 +34,7 @@ class RNNPredictor(object):
         self.pred_test = None
         self.pred_test_lower = None
         self.pred_test_upper = None
+        self.sess = None
 
     def predict(self, content):
         sess = tf.Session()
@@ -115,13 +109,13 @@ class RNNPredictor(object):
         model = keras.models.Model(inputs=inputs, outputs=outputs)
         adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 
-        weights_mse = [i+1 for i in range(self.config.n_predict_step)]
+        weights_mse = [i + 1 for i in range(self.config.n_predict_step)]
         weights_mse.reverse()
 
-        weights_lower = [(i + 1)/2 for i in range(self.config.n_predict_step)]
+        weights_lower = [(i + 1) / 2 for i in range(self.config.n_predict_step)]
         weights_lower.reverse()
 
-        weights_upper = [(i + 1)/2 for i in range(self.config.n_predict_step)]
+        weights_upper = [(i + 1) / 2 for i in range(self.config.n_predict_step)]
         weights_upper.reverse()
 
         weights = weights_mse + weights_lower + weights_upper
@@ -244,6 +238,10 @@ class RNNPredictor(object):
         self.mse_train = mse_train
         self.mse_valid = mse_valid
         self.dates = dates
+        self.sess = sess
 
         return self
 
+    def close(self):
+        K.clear_session()
+        #self.sess.close()

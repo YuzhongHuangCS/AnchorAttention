@@ -1,0 +1,9 @@
+numpy
+scipy
+keras
+flask
+pandas
+tensorflow
+matplotlib
+scikit-learn
+python-dateutil

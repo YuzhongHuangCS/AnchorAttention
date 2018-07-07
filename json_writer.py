@@ -1,8 +1,10 @@
+import json
+
 import numpy as np
-from dateutil.relativedelta import relativedelta
 import scipy
 import scipy.stats
-import json
+from dateutil.relativedelta import relativedelta
+
 
 class JSONWriter(object):
     """docstring for JSONWriter"""
@@ -15,10 +17,9 @@ class JSONWriter(object):
         pred = np.insert(model.pred_test, 0, model.data[-1])
         pred_lower = np.insert(model.pred_test_lower, 0, model.data[-1])
         pred_upper = np.insert(model.pred_test_upper, 0, model.data[-1])
-        outputname = model.basename.replace('_input_', '_output_')
 
         if self.config.test_split:
-            last_date = model.dates[-(self.config.n_predict_step+1)]
+            last_date = model.dates[-(self.config.n_predict_step + 1)]
         else:
             last_date = model.dates[-1]
 
@@ -32,7 +33,7 @@ class JSONWriter(object):
         new_dates = [last_date + diff * i for i in range(len(pred))]
         new_dates_str = [d.strftime("%Y-%m-%d") for d in new_dates]
 
-        if model.mse > 0.2:
+        if model.mse > self.config.mse_threshold:
             print('mse is too large')
             forecast_is_usable = 0
         else:
@@ -90,8 +91,7 @@ class JSONWriter(object):
             ],
         }
 
-        with open(self.config.output_prefix + outputname, 'w') as fout:
-            json.dump(res, fout)
+        return res
 
     def calc_prob_option(self, model, pred, pred_lower, pred_upper):
         if model.content['ifp']['ifp']['parsed_answers']['unit'] == 'boolean':

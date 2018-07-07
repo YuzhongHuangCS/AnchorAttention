@@ -4,7 +4,6 @@ class Config(object):
 
         self.model_prefix = 'model/'
         self.fig_prefix = 'fig/'
-        self.output_prefix = 'output/'
 
         self.n_batch = 1
         self.n_max_epoch = 1000
@@ -20,5 +19,4 @@ class Config(object):
         self.max_valid = 10
         self.valid_loss_weight = 0.5
         self.test_split = True
-
-
+        self.mse_threshold = 0.2
