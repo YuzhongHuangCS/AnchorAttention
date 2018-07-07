@@ -33,14 +33,14 @@ class RNNPredictor(object):
         self.mse_valid = None
         self.basename = None
         self.pred_train = None
-        self.pred_train_upper = None
         self.pred_train_lower = None
+        self.pred_train_upper = None
         self.pred_valid = None
-        self.pred_valid_upper = None
         self.pred_valid_lower = None
+        self.pred_valid_upper = None
         self.pred_test = None
-        self.pred_test_upper = None
         self.pred_test_lower = None
+        self.pred_test_upper = None
 
     def predict(self, content):
         sess = tf.Session()
@@ -118,23 +118,14 @@ class RNNPredictor(object):
         weights_mse = [i+1 for i in range(self.config.n_predict_step)]
         weights_mse.reverse()
 
-        weights_upper = [(i + 1)/2 for i in range(self.config.n_predict_step)]
-        weights_upper.reverse()
-
         weights_lower = [(i + 1)/2 for i in range(self.config.n_predict_step)]
         weights_lower.reverse()
 
-        weights = weights_mse + weights_upper + weights_lower
+        weights_upper = [(i + 1)/2 for i in range(self.config.n_predict_step)]
+        weights_upper.reverse()
+
+        weights = weights_mse + weights_lower + weights_upper
         weights.reverse()
-
-        def get_weighted_loss_upper():
-            def weighted_loss(y_true, y_pred):
-                diff = y_pred - y_true
-                diff_p = K.mean(K.square(K.clip(diff, 0, 1e10)), axis=-1)
-                diff_n = K.mean(K.square(K.clip(diff, -1e10, 0)), axis=-1)
-                return diff_p * 0.05 + diff_n * 1.95
-
-            return weighted_loss
 
         def get_weighted_loss_lower():
             def weighted_loss(y_true, y_pred):
@@ -145,10 +136,20 @@ class RNNPredictor(object):
 
             return weighted_loss
 
+        def get_weighted_loss_upper():
+            def weighted_loss(y_true, y_pred):
+                diff = y_pred - y_true
+                diff_p = K.mean(K.square(K.clip(diff, 0, 1e10)), axis=-1)
+                diff_n = K.mean(K.square(K.clip(diff, -1e10, 0)), axis=-1)
+                return diff_p * 0.05 + diff_n * 1.95
+
+            return weighted_loss
+
         mse_loss = ['mean_squared_error'] * 10
-        upper_loss = [get_weighted_loss_upper() for zz in range(10)]
-        lower_loss = [get_weighted_loss_lower() for zz in range(10)]
-        losses = mse_loss + upper_loss + lower_loss
+        lower_loss = [get_weighted_loss_lower() for _ in range(10)]
+        upper_loss = [get_weighted_loss_upper() for _ in range(10)]
+
+        losses = mse_loss + lower_loss + upper_loss
         model.compile(loss=losses, optimizer=adam, loss_weights=weights)
         model.summary()
 
@@ -203,20 +204,21 @@ class RNNPredictor(object):
         pred = scaler.inverse_transform(pred)
         pred_train = pred[:n_train, 0]
         pred_valid = pred[n_train:-1, 0]
-        pred_train_upper = pred[:n_train, 10]
-        pred_train_lower = pred[:n_train, 20]
-        pred_valid_upper = pred[n_train:-1, 10]
-        pred_valid_lower = pred[n_train:-1, 20]
-        pred_test = pred[-1, :10]
-        pred_test_upper = pred[-1, 10:20]
-        pred_test_lower = pred[-1, 20:]
+        pred_train_lower = pred[:n_train, 10]
+        pred_train_upper = pred[:n_train, 20]
+        pred_valid_lower = pred[n_train:-1, 10]
+        pred_valid_upper = pred[n_train:-1, 20]
 
-        pred_train_upper = np.maximum(pred_train, pred_train_upper)
+        pred_test = pred[-1, :10]
+        pred_test_lower = pred[-1, 10:20]
+        pred_test_upper = pred[-1, 20:]
+
         pred_train_lower = np.minimum(pred_train, pred_train_lower)
-        pred_valid_upper = np.maximum(pred_valid, pred_valid_upper)
+        pred_train_upper = np.maximum(pred_train, pred_train_upper)
         pred_valid_lower = np.minimum(pred_valid, pred_valid_lower)
-        pred_test_upper = np.maximum(pred_test, pred_test_upper)
+        pred_valid_upper = np.maximum(pred_valid, pred_valid_upper)
         pred_test_lower = np.minimum(pred_test, pred_test_lower)
+        pred_test_upper = np.maximum(pred_test, pred_test_upper)
 
         mse_train = sklearn.metrics.mean_squared_error(data[:n_train], pred_train)
         mse_valid = sklearn.metrics.mean_squared_error(data[n_train:], pred_valid)
@@ -231,14 +233,14 @@ class RNNPredictor(object):
         self.n_train = n_train
         self.mse = mse
         self.pred_train = pred_train
-        self.pred_train_upper = pred_train_upper
         self.pred_train_lower = pred_train_lower
+        self.pred_train_upper = pred_train_upper
         self.pred_valid = pred_valid
-        self.pred_valid_upper = pred_valid_upper
         self.pred_valid_lower = pred_valid_lower
+        self.pred_valid_upper = pred_valid_upper
         self.pred_test = pred_test
-        self.pred_test_upper = pred_test_upper
         self.pred_test_lower = pred_test_lower
+        self.pred_test_upper = pred_test_upper
         self.mse_train = mse_train
         self.mse_valid = mse_valid
         self.dates = dates

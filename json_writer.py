@@ -13,11 +13,15 @@ class JSONWriter(object):
 
     def write(self, model):
         pred = np.insert(model.pred_test, 0, model.data[-1])
-        pred_upper = np.insert(model.pred_test_upper, 0, model.data[-1])
         pred_lower = np.insert(model.pred_test_lower, 0, model.data[-1])
+        pred_upper = np.insert(model.pred_test_upper, 0, model.data[-1])
         outputname = model.basename.replace('_input_', '_output_')
 
-        last_date = model.dates[-1]
+        if self.config.test_split:
+            last_date = model.dates[-(self.config.n_predict_step+1)]
+        else:
+            last_date = model.dates[-1]
+
         diff = model.dates[-1] - model.dates[-2]
         if diff.days in (365, 366):
             diff = relativedelta(years=1)
@@ -34,7 +38,7 @@ class JSONWriter(object):
         else:
             forecast_is_usable = 1
 
-        prob_list = self.calc_prob_option(model, model.pred_test[0], model.pred_test_upper[0], model.pred_test_lower[0])
+        prob_list = self.calc_prob_option(model, model.pred_test[0], model.pred_test_lower[0], model.pred_test_upper[0])
 
         res = {
             'forecast_is_usable': [forecast_is_usable],
@@ -89,7 +93,7 @@ class JSONWriter(object):
         with open(self.config.output_prefix + outputname, 'w') as fout:
             json.dump(res, fout)
 
-    def calc_prob_option(self, model, pred, pred_upper, pred_lower):
+    def calc_prob_option(self, model, pred, pred_lower, pred_upper):
         if model.content['ifp']['ifp']['parsed_answers']['unit'] == 'boolean':
             value_list = [[None, 0.5], [0.5, None]]
         else:
@@ -107,8 +111,8 @@ class JSONWriter(object):
 
                 value_list.append(values)
 
-        rv_upper = scipy.stats.norm(loc=pred, scale=(pred_upper - pred) / 2)
         rv_lower = scipy.stats.norm(loc=pred, scale=(pred - pred_lower) / 2)
+        rv_upper = scipy.stats.norm(loc=pred, scale=(pred_upper - pred) / 2)
 
         def return_prob(value):
             if value <= pred:
