@@ -7,7 +7,7 @@ import sklearn.linear_model
 import sklearn.preprocessing
 import tensorflow as tf
 from keras import backend as K
-
+import pdb
 
 # Each instance is created for each incoming request
 class RNNPredictor(object):
@@ -34,7 +34,6 @@ class RNNPredictor(object):
         self.pred_test = None
         self.pred_test_lower = None
         self.pred_test_upper = None
-        self.sess = None
 
     def predict(self, content):
         sess = tf.Session()
@@ -238,10 +237,3 @@ class RNNPredictor(object):
         self.mse_train = mse_train
         self.mse_valid = mse_valid
         self.dates = dates
-        self.sess = sess
-
-        return self
-
-    def close(self):
-        K.clear_session()
-        #self.sess.close()

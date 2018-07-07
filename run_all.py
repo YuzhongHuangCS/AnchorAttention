@@ -13,6 +13,6 @@ else:
 
 for i in range(start, len(files), step):
 	name = files[i]
-	cmd = 'python regular.py data/{}'.format(name)
+	cmd = 'python regular.py data/{} | tee log/{}'.format(name, name.replace('.json', '.log'))
 	print(cmd)
 	os.system(cmd)

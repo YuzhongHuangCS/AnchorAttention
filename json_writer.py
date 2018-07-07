@@ -13,17 +13,17 @@ class JSONWriter(object):
         super(JSONWriter, self).__init__()
         self.config = config
 
-    def write(self, model):
-        pred = np.insert(model.pred_test, 0, model.data[-1])
-        pred_lower = np.insert(model.pred_test_lower, 0, model.data[-1])
-        pred_upper = np.insert(model.pred_test_upper, 0, model.data[-1])
+    def write(self, predictor):
+        pred = np.insert(predictor.pred_test, 0, predictor.data[-1])
+        pred_lower = np.insert(predictor.pred_test_lower, 0, predictor.data[-1])
+        pred_upper = np.insert(predictor.pred_test_upper, 0, predictor.data[-1])
 
         if self.config.test_split:
-            last_date = model.dates[-(self.config.n_predict_step + 1)]
+            last_date = predictor.dates[-(self.config.n_predict_step + 1)]
         else:
-            last_date = model.dates[-1]
+            last_date = predictor.dates[-1]
 
-        diff = model.dates[-1] - model.dates[-2]
+        diff = predictor.dates[-1] - predictor.dates[-2]
         if diff.days in (365, 366):
             diff = relativedelta(years=1)
         elif diff.days in (28, 29, 30, 31):
@@ -33,13 +33,13 @@ class JSONWriter(object):
         new_dates = [last_date + diff * i for i in range(len(pred))]
         new_dates_str = [d.strftime("%Y-%m-%d") for d in new_dates]
 
-        if model.mse > self.config.mse_threshold:
+        if predictor.mse > self.config.mse_threshold:
             print('mse is too large')
             forecast_is_usable = 0
         else:
             forecast_is_usable = 1
 
-        prob_list = self.calc_prob_option(model, model.pred_test[0], model.pred_test_lower[0], model.pred_test_upper[0])
+        prob_list = self.calc_prob_option(predictor, predictor.pred_test[0], predictor.pred_test_lower[0], predictor.pred_test_upper[0])
 
         res = {
             'forecast_is_usable': [forecast_is_usable],
@@ -47,7 +47,7 @@ class JSONWriter(object):
                 'RNN': {
                     'forecast_is_usable': [forecast_is_usable],
                     'internal': {
-                        'rmse': [model.mse]
+                        'rmse': [predictor.mse]
                     },
                     'model': ['RNN'],
                     'to_date': [new_dates_str[-1]],
@@ -59,26 +59,26 @@ class JSONWriter(object):
                         'Lo 95',
                         'Hi 95'
                     ],
-                    'option_labels': model.content['ifp']['ifp']['parsed_answers']['values'],
+                    'option_labels': predictor.content['ifp']['ifp']['parsed_answers']['values'],
                     'option_probabilities': prob_list.tolist()
                 }
             },
             'internal': {
-                'rmse': [model.mse]
+                'rmse': [predictor.mse]
             },
             'model': ['RNN'],
-            'option_labels': model.content['ifp']['ifp']['parsed_answers']['values'],
+            'option_labels': predictor.content['ifp']['ifp']['parsed_answers']['values'],
             'option_probabilities': prob_list.tolist(),
             'parsed_request': {
                 'fcast_dates': new_dates_str[1:],
                 'h': [self.config.n_predict_step],
                 'target': {
-                    'date': [d.strftime("%Y-%m-%d") for d in model.dates],
-                    'value': model.data_all
+                    'date': [d.strftime("%Y-%m-%d") for d in predictor.dates],
+                    'value': predictor.data_all
                 },
                 'target_tail': {
-                    'date': [model.dates[-1].strftime("%Y-%m-%d")],
-                    'value': [model.data_all[-1]]
+                    'date': [predictor.dates[-1].strftime("%Y-%m-%d")],
+                    'value': [predictor.data_all[-1]]
                 }
             },
             'to_date': [new_dates_str[-1]],
@@ -91,13 +91,15 @@ class JSONWriter(object):
             ],
         }
 
-        return res
+        outputname = predictor.basename.replace('_input_', '_output_')
+        with open(self.config.output_prefix + outputname, 'w') as fout:
+            json.dump(res, fout)
 
-    def calc_prob_option(self, model, pred, pred_lower, pred_upper):
-        if model.content['ifp']['ifp']['parsed_answers']['unit'] == 'boolean':
+    def calc_prob_option(self, predictor, pred, pred_lower, pred_upper):
+        if predictor.content['ifp']['ifp']['parsed_answers']['unit'] == 'boolean':
             value_list = [[None, 0.5], [0.5, None]]
         else:
-            option_text = model.content['ifp']['ifp']['parsed_answers']['values']
+            option_text = predictor.content['ifp']['ifp']['parsed_answers']['values']
             count = len(option_text)
             value_list = []
 

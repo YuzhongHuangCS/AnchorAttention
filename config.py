@@ -2,8 +2,10 @@ class Config(object):
     def __init__(self):
         super(Config, self).__init__()
 
+        self.data_prefix = 'data/'
         self.model_prefix = 'model/'
         self.fig_prefix = 'fig/'
+        self.output_prefix = 'output/'
 
         self.n_batch = 1
         self.n_max_epoch = 1000
