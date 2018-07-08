@@ -1,7 +1,7 @@
 import os
 import sys
 
-prefix = 'data_copy/'
+prefix = 'data/'
 files = os.listdir(prefix)
 
 if len(sys.argv) > 2:
@@ -13,6 +13,6 @@ else:
 
 for i in range(start, len(files), step):
     name = files[i]
-    cmd = 'python regular.py data_copy/{} > log/{} 2>&1'.format(name, name.replace('.json', '.log'))
+    cmd = 'python main.py data/{} > log/{} 2>&1'.format(name, name.replace('.json', '.log'))
     print(cmd)
     os.system(cmd)

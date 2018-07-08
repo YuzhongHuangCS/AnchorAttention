@@ -101,9 +101,18 @@ class RNNPredictor(object):
 
             res_grus.append(res_gru)
 
-            for y in range(3):
-                output = denses[z * 3 + y](res_gru)
-                outputs.append(output)
+            output = denses[z](res_gru)
+            outputs.append(output)
+
+        for z in range(self.config.n_predict_step):
+            res_gru = res_grus[z]
+            output = denses[z + self.config.n_predict_step](res_gru)
+            outputs.append(output)
+
+        for z in range(self.config.n_predict_step):
+            res_gru = res_grus[z]
+            output = denses[z + 2*self.config.n_predict_step](res_gru)
+            outputs.append(output)
 
         model = keras.models.Model(inputs=inputs, outputs=outputs)
         adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
