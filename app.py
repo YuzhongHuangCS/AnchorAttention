@@ -29,6 +29,11 @@ def download_output(filename):
     return send_from_directory('output', filename)
 
 
+@app.route('/data/<path:filename>')
+def download_data(filename):
+    return send_from_directory('data', filename)
+
+
 @app.route('/log/<path:filename>')
 def download_log(filename):
     return send_from_directory('log', filename)
