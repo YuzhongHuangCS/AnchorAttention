@@ -6,6 +6,7 @@ class Config(object):
         self.model_prefix = 'model/'
         self.fig_prefix = 'fig/'
         self.output_prefix = 'output/'
+        self.log_prefix = 'log/'
 
         self.n_batch = 1
         self.n_max_epoch = 1000

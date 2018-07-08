@@ -56,7 +56,12 @@ def api():
         filename = '{}andy_input_{}.json'.format(config.data_prefix, q_id)
         with open(filename, 'w') as fout:
             json.dump(content, fout)
-        process = subprocess.Popen('python main.py ' + filename, shell=True)
+
+        logname = '{}andy_input_{}.txt'.format(config.log_prefix, q_id)
+        cmd = 'python3 main.py {} > {} 2>&1'.format(filename, logname)
+        print(cmd)
+
+        process = subprocess.Popen(cmd, shell=True)
         process.wait()
         if process.returncode != 0:
             abort(500)
