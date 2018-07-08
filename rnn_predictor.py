@@ -108,18 +108,6 @@ class RNNPredictor(object):
         model = keras.models.Model(inputs=inputs, outputs=outputs)
         adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 
-        weights_mse = [i + 1 for i in range(self.config.n_predict_step)]
-        weights_mse.reverse()
-
-        weights_lower = [(i + 1) / 2 for i in range(self.config.n_predict_step)]
-        weights_lower.reverse()
-
-        weights_upper = [(i + 1) / 2 for i in range(self.config.n_predict_step)]
-        weights_upper.reverse()
-
-        weights = weights_mse + weights_lower + weights_upper
-        weights.reverse()
-
         def get_weighted_loss_lower():
             def weighted_loss(y_true, y_pred):
                 diff = y_pred - y_true
@@ -143,7 +131,7 @@ class RNNPredictor(object):
         upper_loss = [get_weighted_loss_upper() for _ in range(10)]
 
         losses = mse_loss + lower_loss + upper_loss
-        model.compile(loss=losses, optimizer=adam, loss_weights=weights)
+        model.compile(loss=losses, optimizer=adam)
         model.summary()
 
         # make valid model
@@ -192,7 +180,7 @@ class RNNPredictor(object):
         if self.config.n_predict_step == 1:
             pred = pred.reshape(-1, 1)
 
-        mse = sklearn.metrics.mean_squared_error(data_scaled, pred[:-1, 0])
+        mse = sklearn.metrics.mean_squared_error(data_scaled[n_train:], pred[n_train:-1, 0])
 
         pred = scaler.inverse_transform(pred)
         pred_train = pred[:n_train, 0]

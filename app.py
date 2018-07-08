@@ -1,6 +1,8 @@
 import json
 import subprocess
-from flask import Flask, request, abort, jsonify, send_from_directory
+
+from flask import Flask, request, abort, send_from_directory
+
 from config import Config
 
 app = Flask(__name__)
@@ -20,6 +22,16 @@ def download_fig(filename):
 @app.route('/model/<path:filename>')
 def download_model(filename):
     return send_from_directory('model', filename)
+
+
+@app.route('/output/<path:filename>')
+def download_output(filename):
+    return send_from_directory('output', filename)
+
+
+@app.route('/log/<path:filename>')
+def download_log(filename):
+    return send_from_directory('log', filename)
 
 
 @app.route('/api', methods=['POST'])
@@ -46,6 +58,7 @@ def api():
         else:
             outputname = 'andy_output_{}.json'.format(q_id)
             return send_from_directory('output', outputname)
+
 
 def main():
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=False)

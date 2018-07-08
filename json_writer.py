@@ -100,7 +100,6 @@ class JSONWriter(object):
             value_list = [[None, 0.5], [0.5, None]]
         else:
             option_text = predictor.content['ifp']['ifp']['parsed_answers']['values']
-            count = len(option_text)
             value_list = []
 
             for text in option_text:
@@ -123,8 +122,8 @@ class JSONWriter(object):
                 return rv_upper.cdf(value)
 
         prob_list = []
-        for value in value_list:
-            low, high = value
+        for v in value_list:
+            low, high = v
             if low is None:
                 prob_list.append(return_prob(high))
             elif high is None:

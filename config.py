@@ -18,7 +18,7 @@ class Config(object):
         self.n_lr_decay = 2
         self.lr_decay = 0.99
         self.ratio_valid = 0.1
-        self.max_valid = 10
+        self.max_valid = 20
         self.valid_loss_weight = 0.5
         self.test_split = True
         self.mse_threshold = 0.2
