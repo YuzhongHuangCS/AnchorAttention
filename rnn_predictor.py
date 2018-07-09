@@ -135,9 +135,9 @@ class RNNPredictor(object):
 
             return weighted_loss
 
-        mse_loss = ['mean_squared_error'] * 10
-        lower_loss = [get_weighted_loss_lower() for _ in range(10)]
-        upper_loss = [get_weighted_loss_upper() for _ in range(10)]
+        mse_loss = ['mean_squared_error'] * self.config.n_predict_step
+        lower_loss = [get_weighted_loss_lower() for _ in range(self.config.n_predict_step)]
+        upper_loss = [get_weighted_loss_upper() for _ in range(self.config.n_predict_step)]
 
         losses = mse_loss + lower_loss + upper_loss
         model.compile(loss=losses, optimizer=adam)
@@ -194,14 +194,15 @@ class RNNPredictor(object):
         pred = scaler.inverse_transform(pred)
         pred_train = pred[:n_train, 0]
         pred_valid = pred[n_train:-1, 0]
-        pred_train_lower = pred[:n_train, 10]
-        pred_train_upper = pred[:n_train, 20]
-        pred_valid_lower = pred[n_train:-1, 10]
-        pred_valid_upper = pred[n_train:-1, 20]
+        pred_train_lower = pred[:n_train, self.config.n_predict_step]
+        pred_train_upper = pred[:n_train, 2*self.config.n_predict_step]
+        pred_valid_lower = pred[n_train:-1, self.config.n_predict_step]
+        pred_valid_upper = pred[n_train:-1, 2*self.config.n_predict_step]
 
-        pred_test = pred[-1, :10]
-        pred_test_lower = pred[-1, 10:20]
-        pred_test_upper = pred[-1, 20:]
+        pred_test = pred[-1, :self.config.n_predict_step]
+        pred_test_lower = pred[-1, self.config.n_predict_step:2*self.config.n_predict_step]
+        pred_test_upper = pred[-1, 2*self.config.n_predict_step:]
+
 
         pred_train_lower = np.minimum(pred_train, pred_train_lower)
         pred_train_upper = np.maximum(pred_train, pred_train_upper)
