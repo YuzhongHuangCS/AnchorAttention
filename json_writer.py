@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 import scipy.stats
 from dateutil.relativedelta import relativedelta
-
+import pdb
 
 class JSONWriter(object):
     """docstring for JSONWriter"""
@@ -39,7 +39,7 @@ class JSONWriter(object):
         else:
             forecast_is_usable = 1
 
-        prob_list = self.calc_prob_option(predictor, predictor.pred_test[0], predictor.pred_test_lower[0], predictor.pred_test_upper[0])
+        prob_list = self.calc_prob_option(predictor, predictor.pred_test[-1], predictor.pred_test_lower[-1], predictor.pred_test_upper[-1])
 
         res = {
             'forecast_is_usable': [forecast_is_usable],

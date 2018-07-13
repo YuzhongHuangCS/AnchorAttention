@@ -1,13 +1,12 @@
 import dateutil.parser
-import keras
 import numpy as np
 import pandas as pd
 import sklearn
 import sklearn.linear_model
 import sklearn.preprocessing
 import tensorflow as tf
-from keras import backend as K
 import pdb
+import math
 
 # Each instance is created for each incoming request
 class RNNPredictor(object):
@@ -36,9 +35,6 @@ class RNNPredictor(object):
         self.pred_test_upper = None
 
     def predict(self, content):
-        sess = tf.Session()
-        keras.backend.set_session(sess)
-
         array = content['payload']['historical_data']['ts']
         data_all = [t[1] for t in array]
 
@@ -49,11 +45,14 @@ class RNNPredictor(object):
 
         basename = 'andy_input_{}.json'.format(content['ifp']['id'])
         dates = [dateutil.parser.parse(t[0]) for t in array]
+        #end_date = dateutil.parser.parse(content['ifp']['ends_at'])
+        #n_predict_step = (end_date-dates[-1]).days + 1
+        #self.config.n_predict_step = n_predict_step
+        #self.config.n_output_dim = n_predict_step
 
         scaler = sklearn.preprocessing.StandardScaler()
         data_scaled = scaler.fit_transform(np.asarray(data).reshape(-1, 1))
 
-        # propagate config into local namespace
         df = pd.DataFrame(data_scaled)
         df_array = [df.shift(1), df]
         for i in range(-1, -self.config.n_predict_step, -1):
@@ -61,177 +60,208 @@ class RNNPredictor(object):
         df = pd.concat(df_array, axis=1)
         df.fillna(value=0, inplace=True)
         x, y = df.values[:, 0], df.values[:, 1:]
-        x = x.reshape(-1, self.config.n_timestep, self.config.n_input_dim)
-        y = np.repeat(y, 3, axis=0).reshape(len(x), self.config.n_output_dim * 3)
+        #x = x.reshape(-1, self.config.n_timestep, self.config.n_input_dim)
+        #y = np.repeat(y, 3, axis=0).reshape(len(x), self.config.n_output_dim)
 
         n_valid = max(min(int(len(y) * self.config.ratio_valid), self.config.max_valid), 1)
         n_train = int(int((len(y) - n_valid) / self.config.n_batch) * self.config.n_batch)
-        x_train, y_train = x[:n_train, :, :], y[:n_train]
-        x_valid, y_valid = x[n_train:, :, :], y[n_train:]
+        x_train, y_train = x[:n_train], y[:n_train]
+        x_valid, y_valid = x[n_train:], y[n_train:]
 
-        if self.config.n_predict_step != 1:
-            y_train = [a.reshape(-1, 1, 1) for a in np.hsplit(y_train, self.config.n_predict_step * 3)]
-            y_valid = [a.reshape(-1, 1, 1) for a in np.hsplit(y_valid, self.config.n_predict_step * 3)]
-        else:
-            y_train = y_train.reshape(-1, 1, 1)
-            y_valid = y_valid.reshape(-1, 1, 1)
+        #if self.config.n_predict_step != 1:
+        #    y_train = [a.reshape(-1, 1, 1) for a in np.hsplit(y_train, self.config.n_output_dim)]
+        #    y_valid = [a.reshape(-1, 1, 1) for a in np.hsplit(y_valid, self.config.n_output_dim)]
+        #else:
+        #    y_train = y_train.reshape(-1, 1, 1)
+        #    y_valid = y_valid.reshape(-1, 1, 1)
+
+        num_batches = len(x_train) // self.config.n_batch // self.config.n_timestep
 
         # build network
-        inputs = keras.layers.Input(shape=(self.config.n_timestep, self.config.n_input_dim),
-                                    batch_shape=(self.config.n_batch, self.config.n_timestep, self.config.n_input_dim))
-        grus = []
-        denses = []
+        batchX_placeholder = tf.placeholder(tf.float32, [self.config.n_batch, self.config.n_input_dim])
+        batchY_placeholder = tf.placeholder(tf.float32, [self.config.n_batch, self.config.n_predict_step])
 
-        res_grus = []
-        outputs = []
+        cell_state = tf.placeholder(tf.float32, [self.config.n_batch, self.config.n_neurons])
 
-        for z in range(self.config.n_predict_step):
-            gru = keras.layers.GRU(self.config.n_neurons, stateful=True, return_sequences=True, return_state=False)
-            grus.append(gru)
+        limit = math.sqrt(6/(self.config.n_neurons + self.config.n_output_dim))
+        W2 = tf.Variable(np.random.uniform(-limit, limit, (self.config.n_neurons, self.config.n_output_dim)).astype(np.float32))
+        b2 = tf.Variable(np.zeros((1, self.config.n_output_dim)), dtype=tf.float32)
 
-            for y in range(3):
-                dense = keras.layers.Dense(1)
-                denses.append(dense)
+        # Unpack columns
+        inputs_series = tf.split(batchX_placeholder, self.config.n_timestep, 0)
+        labels_series = batchY_placeholder
 
-        for z in range(self.config.n_predict_step):
-            if z == 0:
-                res_gru = grus[z](inputs)
-            else:
-                res_gru = grus[z](res_grus[z - 1])
+        # Forward passes
+        cell = tf.nn.rnn_cell.GRUCell(self.config.n_neurons)
+        # gru's output is same as state
+        states_series, current_state = tf.nn.static_rnn(cell, inputs_series, cell_state)
 
-            res_grus.append(res_gru)
+        prediction = tf.matmul(current_state, W2) + b2
+        pred_point = tf.slice(prediction, (0, 0), (1, 10))
+        pred_lower = tf.slice(prediction, (0, 10), (1, 10))
+        pred_upper = tf.slice(prediction, (0, 20), (1, 10))
 
-            output = denses[z](res_gru)
-            outputs.append(output)
+        point_loss = tf.squared_difference(pred_point, labels_series)
 
-        for z in range(self.config.n_predict_step):
-            res_gru = res_grus[z]
-            output = denses[z + self.config.n_predict_step](res_gru)
-            outputs.append(output)
+        diff_lower = pred_lower - labels_series
+        diff_p_l = tf.reduce_mean(tf.square(tf.clip_by_value(diff_lower, 0, 1e10)), axis=-1)
+        diff_n_l = tf.reduce_mean(tf.square(tf.clip_by_value(diff_lower, -1e10, 0)), axis=-1)
+        lower_loss = diff_p_l * 1.95 + diff_n_l * 0.05
 
-        for z in range(self.config.n_predict_step):
-            res_gru = res_grus[z]
-            output = denses[z + 2*self.config.n_predict_step](res_gru)
-            outputs.append(output)
+        diff_upper = pred_upper - labels_series
+        diff_p_u = tf.reduce_mean(tf.square(tf.clip_by_value(diff_upper, 0, 1e10)), axis=-1)
+        diff_n_u = tf.reduce_mean(tf.square(tf.clip_by_value(diff_upper, -1e10, 0)), axis=-1)
+        upper_loss = diff_p_u * 0.05 + diff_n_u * 1.95
 
-        model = keras.models.Model(inputs=inputs, outputs=outputs)
-        adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+        total_loss = point_loss + lower_loss + upper_loss
 
-        def get_weighted_loss_lower():
-            def weighted_loss(y_true, y_pred):
-                diff = y_pred - y_true
-                diff_p = K.mean(K.square(K.clip(diff, 0, 1e10)), axis=-1)
-                diff_n = K.mean(K.square(K.clip(diff, -1e10, 0)), axis=-1)
-                return diff_p * 1.95 + diff_n * 0.05
+        learning_rate = tf.Variable(self.config.lr, trainable=False)
+        learning_rate_decay_op = learning_rate.assign(learning_rate * self.config.lr_decay)
+        optimizer = tf.train.AdamOptimizer(learning_rate)
+        train_step = optimizer.minimize(loss=total_loss)
 
-            return weighted_loss
+        saver = tf.train.Saver()
+        save_path = self.config.model_prefix + basename.replace('json', 'ckpt')
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
 
-        def get_weighted_loss_upper():
-            def weighted_loss(y_true, y_pred):
-                diff = y_pred - y_true
-                diff_p = K.mean(K.square(K.clip(diff, 0, 1e10)), axis=-1)
-                diff_n = K.mean(K.square(K.clip(diff, -1e10, 0)), axis=-1)
-                return diff_p * 0.05 + diff_n * 1.95
+            # make valid model
+            smallest_loss = float('inf')
+            wait = 0
 
-            return weighted_loss
+            for i in range(self.config.n_max_epoch):
+                print('Epoch: {}/{}'.format(i, self.config.n_max_epoch))
+                # train
+                _current_cell_state = np.zeros((self.config.n_batch, self.config.n_neurons), dtype=np.float32)
+                train_loss_list = []
+                for batch_idx in range(num_batches):
+                    start_idx = batch_idx * self.config.n_timestep
+                    end_idx = start_idx + self.config.n_timestep
 
-        mse_loss = ['mean_squared_error'] * self.config.n_predict_step
-        lower_loss = [get_weighted_loss_lower() for _ in range(self.config.n_predict_step)]
-        upper_loss = [get_weighted_loss_upper() for _ in range(self.config.n_predict_step)]
+                    batchX = x_train[start_idx:end_idx].reshape(-1, 1)
+                    batchY = y_train[start_idx:end_idx]
 
-        losses = mse_loss + lower_loss + upper_loss
-        model.compile(loss=losses, optimizer=adam)
-        model.summary()
+                    _total_loss, _train_step, _current_state = sess.run(
+                        [total_loss, train_step, current_state],
+                        feed_dict={
+                            batchX_placeholder: batchX,
+                            batchY_placeholder: batchY,
+                            cell_state: _current_cell_state,
+                        })
 
-        # make valid model
-        smallest_loss = float('inf')
-        smallest_weight = None
-        wait = 0
+                    _current_cell_state = _current_state
 
-        # fit network
-        for i in range(self.config.n_max_epoch):
-            print('epoch: {}/{}'.format(i, self.config.n_max_epoch))
-            # because
-            loss = model.fit(x_train, y_train, epochs=1, batch_size=self.config.n_batch, verbose=1, shuffle=False,
-                             validation_data=(x_valid, y_valid))
-            model.reset_states()
+                    train_loss_list.append(_total_loss)
 
-            print('train loss: {}, valid loss: {}'.format(loss.history['loss'][0], loss.history['val_loss'][0]))
-            total_loss = loss.history['loss'][0] * (1 - self.config.valid_loss_weight) + loss.history['val_loss'][
-                0] * self.config.valid_loss_weight
-            # push into heap
-            if wait <= self.config.n_patience:
-                if total_loss < smallest_loss:
-                    smallest_loss = total_loss
-                    smallest_weight = model.get_weights()
-                    wait = 0
-                    print('New smallest')
+                train_loss = np.mean(train_loss_list)
+
+                # valid, re use state
+                valid_loss_list = []
+                for batch_idx in range(len(x_valid)):
+                    start_idx = batch_idx
+                    end_idx = start_idx+1
+
+                    batchX = x_valid[start_idx:end_idx].reshape(-1, 1)
+                    batchY = y_valid[start_idx:end_idx]
+
+
+                    _total_loss, _current_state = sess.run(
+                        [total_loss, current_state],
+                        feed_dict={
+                            batchX_placeholder: batchX,
+                            batchY_placeholder: batchY,
+                            cell_state: _current_cell_state,
+                        })
+
+                    _current_cell_state = _current_state
+
+                    valid_loss_list.append(_total_loss)
+
+                valid_loss = np.mean(valid_loss_list)
+                sum_loss = train_loss * (1 - self.config.valid_loss_weight) + valid_loss * self.config.valid_loss_weight
+                print("Epoch", i, "Train Loss", train_loss, 'Valid Loss', valid_loss, 'Sum Loss', sum_loss)
+                if wait <= self.config.n_patience:
+                    if sum_loss < smallest_loss:
+                        smallest_loss = sum_loss
+                        saver.save(sess, save_path)
+                        wait = 0
+                        print('New smallest')
+                    else:
+                        wait += 1
+                        print('Wait {}'.format(wait))
+                        if wait % self.config.n_lr_decay == 0:
+                            sess.run(learning_rate_decay_op)
+                            print('Apply lr decay, new lr: %f' % learning_rate.eval())
                 else:
-                    wait += 1
-                    print('Wait {}'.format(wait))
-                    if wait % self.config.n_lr_decay == 0:
-                        this_lr = adam.lr.eval(sess)
-                        assign_op = adam.lr.assign(this_lr * self.config.lr_decay)
-                        sess.run(assign_op)
-                        print('Reduce lr to: ', this_lr * self.config.lr_decay)
-            else:
-                break
+                    break
 
-        model.set_weights(smallest_weight)
+            print('In test')
+            #test
+            saver.restore(sess, save_path)
+            _current_cell_state = np.zeros((self.config.n_batch, self.config.n_neurons), dtype=np.float32)
 
-        model.save(self.config.model_prefix + basename.replace('json', 'h5'))
+            data_forcast = np.insert(data_scaled, 0, 0)
+            preds = []
+            for batch_idx in range(len(data_forcast)):
+                start_idx = batch_idx
+                end_idx = start_idx + 1
 
-        data_forcast = np.insert(data_scaled, 0, 0)
-        model.reset_states()
-        pred = model.predict(data_forcast.reshape(-1, 1, 1), batch_size=self.config.n_batch)
-        pred = np.asarray(pred).squeeze().T
+                batchX = data_forcast[start_idx:end_idx].reshape(-1, 1)
 
-        if self.config.n_predict_step == 1:
-            pred = pred.reshape(-1, 1)
+                _prediction, _current_state = sess.run(
+                    [prediction, current_state],
+                    feed_dict={
+                        batchX_placeholder: batchX,
+                        cell_state: _current_cell_state,
+                    })
+                _current_cell_state = _current_state
 
-        mse = sklearn.metrics.mean_squared_error(data_scaled[n_train:], pred[n_train:-1, 0])
+                preds.append(_prediction)
 
-        pred = scaler.inverse_transform(pred)
-        pred_train = pred[:n_train, 0]
-        pred_valid = pred[n_train:-1, 0]
-        pred_train_lower = pred[:n_train, self.config.n_predict_step]
-        pred_train_upper = pred[:n_train, 2*self.config.n_predict_step]
-        pred_valid_lower = pred[n_train:-1, self.config.n_predict_step]
-        pred_valid_upper = pred[n_train:-1, 2*self.config.n_predict_step]
+            pred = np.asarray(preds).squeeze()
 
-        pred_test = pred[-1, :self.config.n_predict_step]
-        pred_test_lower = pred[-1, self.config.n_predict_step:2*self.config.n_predict_step]
-        pred_test_upper = pred[-1, 2*self.config.n_predict_step:]
+            mse = sklearn.metrics.mean_squared_error(data_scaled[n_train:], pred[n_train:-1, 0])
 
+            pred = scaler.inverse_transform(pred)
+            pred_train = pred[:n_train, 0]
+            pred_valid = pred[n_train:-1, 0]
+            pred_train_lower = pred[:n_train, self.config.n_predict_step]
+            pred_train_upper = pred[:n_train, 2*self.config.n_predict_step]
+            pred_valid_lower = pred[n_train:-1, self.config.n_predict_step]
+            pred_valid_upper = pred[n_train:-1, 2*self.config.n_predict_step]
 
-        pred_train_lower = np.minimum(pred_train, pred_train_lower)
-        pred_train_upper = np.maximum(pred_train, pred_train_upper)
-        pred_valid_lower = np.minimum(pred_valid, pred_valid_lower)
-        pred_valid_upper = np.maximum(pred_valid, pred_valid_upper)
-        pred_test_lower = np.minimum(pred_test, pred_test_lower)
-        pred_test_upper = np.maximum(pred_test, pred_test_upper)
+            pred_test = pred[-1, :self.config.n_predict_step]
+            pred_test_lower = pred[-1, self.config.n_predict_step:2*self.config.n_predict_step]
+            pred_test_upper = pred[-1, 2*self.config.n_predict_step:]
 
-        mse_train = sklearn.metrics.mean_squared_error(data[:n_train], pred_train)
-        mse_valid = sklearn.metrics.mean_squared_error(data[n_train:], pred_valid)
-        print('mse_train', mse_train)
-        print('mse_valid', mse_valid)
-        print('mse', mse)
+            #pred_train_lower = np.minimum(pred_train, pred_train_lower)
+            #pred_train_upper = np.maximum(pred_train, pred_train_upper)
+            #pred_valid_lower = np.minimum(pred_valid, pred_valid_lower)
+            #pred_valid_upper = np.maximum(pred_valid, pred_valid_upper)
+            #pred_test_lower = np.minimum(pred_test, pred_test_lower)
+            #pred_test_upper = np.maximum(pred_test, pred_test_upper)
 
-        self.content = content
-        self.data = data
-        self.data_all = data_all
-        self.basename = basename
-        self.n_train = n_train
-        self.mse = mse
-        self.pred_train = pred_train
-        self.pred_train_lower = pred_train_lower
-        self.pred_train_upper = pred_train_upper
-        self.pred_valid = pred_valid
-        self.pred_valid_lower = pred_valid_lower
-        self.pred_valid_upper = pred_valid_upper
-        self.pred_test = pred_test
-        self.pred_test_lower = pred_test_lower
-        self.pred_test_upper = pred_test_upper
-        self.mse_train = mse_train
-        self.mse_valid = mse_valid
-        self.dates = dates
+            mse_train = sklearn.metrics.mean_squared_error(data[:n_train], pred_train)
+            mse_valid = sklearn.metrics.mean_squared_error(data[n_train:], pred_valid)
+            print('mse_train', mse_train)
+            print('mse_valid', mse_valid)
+            print('mse', mse)
+
+            self.content = content
+            self.data = data
+            self.data_all = data_all
+            self.basename = basename
+            self.n_train = n_train
+            self.mse = mse
+            self.pred_train = pred_train
+            self.pred_train_lower = pred_train_lower
+            self.pred_train_upper = pred_train_upper
+            self.pred_valid = pred_valid
+            self.pred_valid_lower = pred_valid_lower
+            self.pred_valid_upper = pred_valid_upper
+            self.pred_test = pred_test
+            self.pred_test_lower = pred_test_lower
+            self.pred_test_upper = pred_test_upper
+            self.mse_train = mse_train
+            self.mse_valid = mse_valid
+            self.dates = dates

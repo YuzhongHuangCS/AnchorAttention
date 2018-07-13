@@ -30,7 +30,7 @@ class PlotWriter(object):
         plt.plot([], [], ' ', label='mse_train: {0:.2f}'.format(predictor.mse_train))
         plt.plot([], [], ' ', label='mse_valid: {0:.2f}'.format(predictor.mse_valid))
         plt.plot([], [], ' ', label='mse: {}'.format(predictor.mse))
-        plt.legend()
+        plt.legend(loc='lower left')
 
         plt.title('Forecast for ' + predictor.basename)
         plt.savefig(self.config.fig_prefix + predictor.basename.replace('json', 'pdf'))
