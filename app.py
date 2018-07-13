@@ -48,7 +48,7 @@ def api():
     else:
         if 'json' in request.files:
             f = request.files.get('json')
-            uploadname = self.config.upload_prefix + f.filename
+            uploadname = config.upload_prefix + f.filename
             f.save(uploadname)
             content = json.load(open(uploadname))
 
