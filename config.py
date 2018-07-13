@@ -2,6 +2,7 @@ class Config(object):
     def __init__(self):
         super(Config, self).__init__()
 
+        self.upload_prefix = 'upload/'
         self.data_prefix = 'data/'
         self.model_prefix = 'model/'
         self.fig_prefix = 'fig/'

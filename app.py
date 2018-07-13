@@ -47,7 +47,10 @@ def api():
         content = request.json
     else:
         if 'json' in request.files:
-            content = json.load(request.files.get('json'))
+            f = request.files.get('json')
+            uploadname = self.config.upload_prefix + f.filename
+            f.save(uploadname)
+            content = json.load(open(uploadname))
 
     if content is None:
         abort(400)
