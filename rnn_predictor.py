@@ -5,7 +5,6 @@ import sklearn
 import sklearn.linear_model
 import sklearn.preprocessing
 import tensorflow as tf
-import pdb
 import math
 
 # Each instance is created for each incoming request
@@ -45,10 +44,11 @@ class RNNPredictor(object):
 
         basename = 'andy_input_{}.json'.format(content['ifp']['id'])
         dates = [dateutil.parser.parse(t[0]) for t in array]
-        #end_date = dateutil.parser.parse(content['ifp']['ends_at'])
-        #n_predict_step = (end_date-dates[-1]).days + 1
-        #self.config.n_predict_step = n_predict_step
-        #self.config.n_output_dim = n_predict_step
+        end_date = dateutil.parser.parse(content['ifp']['ends_at'])
+        n_predict_step = (end_date-dates[-1]).days + 1
+        self.config.n_predict_step = n_predict_step
+        self.config.n_output_dim = n_predict_step * 3
+        print('Predict step: ', self.config.n_predict_step, self.config.n_output_dim)
 
         scaler = sklearn.preprocessing.StandardScaler()
         data_scaled = scaler.fit_transform(np.asarray(data).reshape(-1, 1))
@@ -97,9 +97,9 @@ class RNNPredictor(object):
         states_series, current_state = tf.nn.static_rnn(cell, inputs_series, cell_state)
 
         prediction = tf.matmul(current_state, W2) + b2
-        pred_point = tf.slice(prediction, (0, 0), (1, 10))
-        pred_lower = tf.slice(prediction, (0, 10), (1, 10))
-        pred_upper = tf.slice(prediction, (0, 20), (1, 10))
+        pred_point = tf.slice(prediction, (0, 0), (1, self.config.n_predict_step))
+        pred_lower = tf.slice(prediction, (0, self.config.n_predict_step), (1, self.config.n_predict_step))
+        pred_upper = tf.slice(prediction, (0, 2*self.config.n_predict_step), (1, self.config.n_predict_step))
 
         point_loss = tf.squared_difference(pred_point, labels_series)
 

@@ -22,5 +22,5 @@ class Config(object):
         self.ratio_valid = 0.1
         self.max_valid = 20
         self.valid_loss_weight = 0.5
-        self.test_split = True
+        self.test_split = False
         self.mse_threshold = 0.2
