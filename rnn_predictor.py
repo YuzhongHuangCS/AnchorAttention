@@ -101,7 +101,7 @@ class RNNPredictor(object):
         pred_lower = tf.slice(prediction, (0, self.config.n_predict_step), (1, self.config.n_predict_step))
         pred_upper = tf.slice(prediction, (0, 2*self.config.n_predict_step), (1, self.config.n_predict_step))
 
-        point_loss = tf.squared_difference(pred_point, labels_series)
+        point_loss = tf.reduce_mean(tf.squared_difference(pred_point, labels_series), axis=-1)
 
         diff_lower = pred_lower - labels_series
         diff_p_l = tf.reduce_mean(tf.square(tf.clip_by_value(diff_lower, 0, 1e10)), axis=-1)
