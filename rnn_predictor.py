@@ -6,6 +6,7 @@ import sklearn.linear_model
 import sklearn.preprocessing
 import tensorflow as tf
 import math
+from dateutil.relativedelta import relativedelta
 
 # Each instance is created for each incoming request
 class RNNPredictor(object):
@@ -45,7 +46,23 @@ class RNNPredictor(object):
         basename = 'andy_input_{}.json'.format(content['ifp']['id'])
         dates = [dateutil.parser.parse(t[0]) for t in array]
         end_date = dateutil.parser.parse(content['ifp']['ends_at'])
-        n_predict_step = (end_date-dates[-1]).days + 1
+
+        diff = dates[-1] - dates[-2]
+        if diff.days in (365, 366):
+            diff = relativedelta(years=1)
+        elif diff.days in (28, 29, 30, 31):
+            diff = relativedelta(months=1)
+
+        n_predict_step = 0
+        curr_date = dates[-1]
+        while curr_date < end_date:
+            curr_date += diff
+            n_predict_step += 1
+
+        if n_predict_step == 0:
+            print('n_predict_step == 0')
+            exit()
+
         self.config.n_predict_step = n_predict_step
         self.config.n_output_dim = n_predict_step * 3
         print('Predict step: ', self.config.n_predict_step, self.config.n_output_dim)
