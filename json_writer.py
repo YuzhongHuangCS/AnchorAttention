@@ -112,8 +112,8 @@ class JSONWriter(object):
 
                 value_list.append(values)
 
-        rv_lower = scipy.stats.norm(loc=pred, scale=(pred - pred_lower) / 2)
-        rv_upper = scipy.stats.norm(loc=pred, scale=(pred_upper - pred) / 2)
+        rv_lower = scipy.stats.norm(loc=pred, scale=np.maximum((pred - pred_lower) / 2, 1e-10))
+        rv_upper = scipy.stats.norm(loc=pred, scale=np.maximum((pred_upper - pred) / 2, 1e-10))
 
         def return_prob(value):
             if value <= pred:

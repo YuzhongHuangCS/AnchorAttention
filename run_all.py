@@ -1,18 +1,12 @@
 import os
-import sys
 
 prefix = 'data/'
 files = os.listdir(prefix)
 
-if len(sys.argv) > 2:
-    start = int(sys.argv[1])
-    step = int(sys.argv[2])
-else:
-    start = 0
-    step = 1
-
-for i in range(start, len(files), step):
-    name = files[i]
-    cmd = 'python3 main.py data/{} > log/{} 2>&1'.format(name, name.replace('.json', '.txt'))
-    print(cmd)
-    os.system(cmd)
+for i in range(len(files)):
+	name = files[i]
+	logfile = 'log/{}'.format(name.replace('.json', '.txt'))
+	if not os.path.isfile(logfile):
+		cmd = 'python3 main.py data/{} > {} 2>&1'.format(name, logfile)
+		print(cmd)
+		os.system(cmd)

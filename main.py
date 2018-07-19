@@ -1,7 +1,7 @@
 import os
 
 # uncomment to force CPU training
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 import sys
 import json
