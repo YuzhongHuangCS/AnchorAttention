@@ -33,7 +33,7 @@ class JSONWriter(object):
         new_dates = [last_date + diff * i for i in range(len(pred))]
         new_dates_str = [d.strftime("%Y-%m-%d") for d in new_dates]
 
-        if predictor.mse > self.config.mse_threshold:
+        if predictor.mse_valid > self.config.mse_threshold:
             print('mse is too large')
             forecast_is_usable = 0
         else:
@@ -47,7 +47,7 @@ class JSONWriter(object):
                 'RNN': {
                     'forecast_is_usable': [forecast_is_usable],
                     'internal': {
-                        'rmse': [predictor.mse]
+                        'rmse': [predictor.mse_valid]
                     },
                     'model': ['RNN'],
                     'to_date': [new_dates_str[-1]],
@@ -64,7 +64,7 @@ class JSONWriter(object):
                 }
             },
             'internal': {
-                'rmse': [predictor.mse]
+                'rmse': [predictor.mse_valid]
             },
             'model': ['RNN'],
             'option_labels': predictor.content['ifp']['ifp']['parsed_answers']['values'],

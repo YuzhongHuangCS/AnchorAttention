@@ -6,6 +6,7 @@ import sklearn.linear_model
 import sklearn.preprocessing
 import tensorflow as tf
 from dateutil.relativedelta import relativedelta
+import pdb
 
 # Each instance is created for each incoming request
 class RNNPredictor(object):
@@ -19,7 +20,6 @@ class RNNPredictor(object):
         self.data_all = None
         self.dates = None
         self.n_train = None
-        self.mse = None
         self.mse_train = None
         self.mse_valid = None
         self.basename = None
@@ -37,11 +37,6 @@ class RNNPredictor(object):
     def predict(self, content):
         array = content['payload']['historical_data']['ts']
         data_all = [t[1] for t in array]
-
-        if self.config.test_split:
-            data = data_all[:-self.config.n_predict_step]
-        else:
-            data = data_all
 
         basename = 'andy_input_{}.json'.format(content['ifp']['id'])
         dates = [dateutil.parser.parse(t[0]) for t in array]
@@ -64,11 +59,18 @@ class RNNPredictor(object):
             #exit()
             n_predict_step = 10
 
+        n_predict_step = 10
         self.config.n_predict_step = n_predict_step
         self.config.n_output_dim = n_predict_step * 3
 
+        if self.config.test_split:
+            data = data_all[:-self.config.n_predict_step]
+        else:
+            data = data_all
+
         scaler = sklearn.preprocessing.StandardScaler()
         data_scaled = scaler.fit_transform(np.asarray(data).reshape(-1, 1))
+        data_all_scaled = scaler.transform(np.asarray(data_all).reshape(-1, 1))
 
         df = pd.DataFrame(data_scaled)
         df_array = [df.shift(1), df]
@@ -86,7 +88,7 @@ class RNNPredictor(object):
         n_total = len(y)
 
         print('Predict step: ', self.config.n_predict_step, self.config.n_output_dim)
-        print(n_valid, n_usable_valid, n_train, n_total)
+        print('n_valid:', n_valid, 'n_usable_valid:', n_usable_valid, 'n_train:', n_train, 'n_total:', n_total)
         #x_train, y_train = x[:n_train], y[:n_train]
         #x_valid, y_valid = x[n_train:], y[n_train:]
 
@@ -94,8 +96,13 @@ class RNNPredictor(object):
         batchX_placeholder = tf.placeholder(tf.float32, [n_total+1, self.config.n_input_dim])
         batchY_placeholder = tf.placeholder(tf.float32, [n_total, self.config.n_predict_step])
 
-        W = tf.get_variable('W', shape=(self.config.n_neurons, self.config.n_output_dim))
-        b = tf.get_variable('b', shape=(1, self.config.n_output_dim), initializer=tf.zeros_initializer())
+
+        W1 = tf.get_variable('W1', shape=(self.config.n_neurons, self.config.n_output_dim))
+        b1 = tf.get_variable('b1', shape=(1, self.config.n_output_dim), initializer=tf.zeros_initializer())
+        #W2 = tf.get_variable('W2', shape=(self.config.n_dense1_dim, self.config.n_output_dim))
+        #b2 = tf.get_variable('b2', shape=(1, self.config.n_output_dim), initializer=tf.zeros_initializer())
+        #W3 = tf.get_variable('W3', shape=(self.config.n_dense2_dim, self.config.n_output_dim))
+        #b3 = tf.get_variable('b3', shape=(1, self.config.n_output_dim), initializer=tf.zeros_initializer())
 
         # Unpack columns
         inputs_series = tf.reshape(batchX_placeholder, (1, -1, 1))
@@ -107,7 +114,9 @@ class RNNPredictor(object):
 
         states_series, current_state = tf.nn.dynamic_rnn(cell, inputs_series, initial_state=cell_state, parallel_iterations=1)
 
-        prediction = tf.matmul(tf.squeeze(states_series), W) + b
+        prediction = tf.matmul(tf.squeeze(states_series), W1) + b1
+        #prediction = tf.matmul(tf.tanh(tf.matmul(tf.squeeze(states_series), W1) + b1), W2) + b2
+        #prediction = tf.matmul(tf.tanh(tf.matmul(tf.tanh(tf.matmul(tf.squeeze(states_series), W1) + b1), W2) + b2), W3) + b3
 
         pred_point_train = tf.slice(prediction, (0, 0), (n_train, self.config.n_predict_step))
         pred_lower_train = tf.slice(prediction, (0, self.config.n_predict_step), (n_train, self.config.n_predict_step))
@@ -125,6 +134,7 @@ class RNNPredictor(object):
         step_weight_np = step_weight_np / np.sum(step_weight_np)
         step_weight = tf.constant(step_weight_np, dtype=tf.float32)
 
+        # the total loss take all predictions into account
         def get_total_loss(pred_point, pred_lower, pred_upper, label):
             point_loss = tf.reduce_mean(tf.squared_difference(pred_point, label) * step_weight)
 
@@ -149,7 +159,7 @@ class RNNPredictor(object):
         optimizer = tf.train.AdamOptimizer(learning_rate)
 
         gradients, variables = zip(*optimizer.compute_gradients(total_loss_train))
-        gradients, _ = tf.clip_by_global_norm(gradients, 1.0)
+        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
         train_step = optimizer.apply_gradients(zip(gradients, variables))
 
         saver = tf.train.Saver()
@@ -175,6 +185,7 @@ class RNNPredictor(object):
                 print('Epoch: {}/{}'.format(i, self.config.n_max_epoch))
                 # train
                 _current_cell_state = np.zeros((self.config.n_batch, self.config.n_neurons), dtype=np.float32)
+
                 train_loss, valid_loss, _train_step = sess.run(
                 [total_loss_train, total_loss_valid, train_step],
                     feed_dict={
@@ -206,6 +217,7 @@ class RNNPredictor(object):
             _load_weights()
             saver.save(sess, save_path)
             _current_cell_state = np.zeros((self.config.n_batch, self.config.n_neurons), dtype=np.float32)
+
             pred = sess.run(
             [prediction],
                 feed_dict={
@@ -215,8 +227,14 @@ class RNNPredictor(object):
             )
 
             pred = np.asarray(pred).squeeze()
-            # mse is only calculated on validation set
-            mse = sklearn.metrics.mean_squared_error(data_scaled[n_train:], pred[n_train:-1, 0])
+            mse_train = sklearn.metrics.mean_squared_error(data_scaled[:n_train], pred[:n_train, 0])
+            mse_valid = sklearn.metrics.mean_squared_error(data_scaled[n_train:], pred[n_train:-1, 0])
+            print('mse_train', mse_train)
+            print('mse_valid', mse_valid)
+            if self.config.test_split:
+                mse_test = sklearn.metrics.mean_squared_error(data_all_scaled[-self.config.n_predict_step:], pred[-1, :self.config.n_predict_step])
+                print('mse_test', mse_test)
+                self.mse_test = mse_test
 
             pred = scaler.inverse_transform(pred)
             pred_train = pred[:n_train, 0]
@@ -237,18 +255,11 @@ class RNNPredictor(object):
             pred_test_lower = np.minimum(pred_test, np.minimum(pred_test_lower, pred_test_upper))
             pred_test_upper = np.maximum(pred_test, np.maximum(pred_test_upper, pred_test_lower))
 
-            mse_train = sklearn.metrics.mean_squared_error(data[:n_train], pred_train)
-            mse_valid = sklearn.metrics.mean_squared_error(data[n_train:], pred_valid)
-            print('mse_train', mse_train)
-            print('mse_valid', mse_valid)
-            print('mse', mse)
-
             self.content = content
             self.data = data
             self.data_all = data_all
             self.basename = basename
             self.n_train = n_train
-            self.mse = mse
             self.pred_train = pred_train
             self.pred_train_lower = pred_train_lower
             self.pred_train_upper = pred_train_upper

@@ -11,6 +11,22 @@ class PlotWriter(object):
     def write(self, predictor):
         plt.plot(list(range(len(predictor.data_all))), predictor.data_all, 'b', label='true')
         plt.plot(list(range(predictor.n_train)), predictor.pred_train, 'g', label='pred_train')
+        plt.plot(list(range(predictor.n_train, len(predictor.data))), predictor.pred_valid, 'r', label='pred_valid')
+        plt.plot(list(range(len(predictor.data), len(predictor.data) + len(predictor.pred_test))), predictor.pred_test, 'c',
+                 label='pred_test')
+
+        plt.plot([], [], ' ', label='mse_train: {0:.2f}'.format(predictor.mse_train))
+        plt.plot([], [], ' ', label='mse_valid: {0:.2f}'.format(predictor.mse_valid))
+        if self.config.test_split:
+            plt.plot([], [], ' ', label='mse_test: {0:.2f}'.format(predictor.mse_test))
+        plt.legend(loc='lower left')
+
+        plt.title('Forecast for ' + predictor.basename)
+        plt.savefig(self.config.fig_prefix + predictor.basename.replace('json', 'pdf'))
+        plt.close()
+
+        plt.plot(list(range(len(predictor.data_all))), predictor.data_all, 'b', label='true')
+        plt.plot(list(range(predictor.n_train)), predictor.pred_train, 'g', label='pred_train')
         plt.plot(list(range(predictor.n_train)), predictor.pred_train_lower, 'darkgreen', label='pred_train_lower')
         plt.plot(list(range(predictor.n_train)), predictor.pred_train_upper, 'lime', label='pred_train_upper')
         plt.plot(list(range(predictor.n_train, len(predictor.data))), predictor.pred_valid, 'r', label='pred_valid')
@@ -29,9 +45,10 @@ class PlotWriter(object):
 
         plt.plot([], [], ' ', label='mse_train: {0:.2f}'.format(predictor.mse_train))
         plt.plot([], [], ' ', label='mse_valid: {0:.2f}'.format(predictor.mse_valid))
-        plt.plot([], [], ' ', label='mse: {}'.format(predictor.mse))
+        if self.config.test_split:
+            plt.plot([], [], ' ', label='mse_test: {0:.2f}'.format(predictor.mse_test))
         plt.legend(loc='lower left')
 
         plt.title('Forecast for ' + predictor.basename)
-        plt.savefig(self.config.fig_prefix + predictor.basename.replace('json', 'pdf'))
+        plt.savefig(self.config.fig_prefix + predictor.basename.replace('.json', '_detail.pdf'))
         plt.close()

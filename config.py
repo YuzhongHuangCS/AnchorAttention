@@ -11,7 +11,9 @@ class Config(object):
 
         self.n_batch = 1
         self.n_max_epoch = 1000
-        self.n_neurons = 512
+        self.n_neurons = 256
+        self.n_dense1_dim = 128
+        #self.n_dense2_dim = 64
         self.n_predict_step = 10
         self.n_input_dim = 1
         self.n_output_dim = 30
@@ -20,7 +22,7 @@ class Config(object):
         self.lr = 1e-2
         self.lr_decay = 0.95
         self.ratio_valid = 0.1
-        self.max_valid = 20
-        self.valid_loss_weight = 0.5
+        self.max_valid = 100
+        self.valid_loss_weight = 0.8
         self.test_split = True
         self.mse_threshold = 0.2
