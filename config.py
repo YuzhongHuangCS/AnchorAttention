@@ -15,7 +15,7 @@ class Config(object):
         self.n_predict_step = 10
         self.n_input_dim = 1
         self.n_output_dim = 30
-        self.n_patience = 50
+        self.n_patience = 20
         self.n_lr_decay = 2
         self.lr = 1e-3
         self.lr_decay = 0.9

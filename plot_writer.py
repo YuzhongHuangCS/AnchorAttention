@@ -19,7 +19,7 @@ class PlotWriter(object):
         plt.plot([], [], ' ', label='mse_valid: {0:.2f}'.format(predictor.mse_valid))
         if self.config.test_split:
             plt.plot([], [], ' ', label='mse_test: {0:.2f}'.format(predictor.mse_test))
-        plt.legend(loc='lower left')
+        plt.legend()
 
         plt.title('Forecast for ' + predictor.basename)
         plt.savefig(self.config.fig_prefix + predictor.basename.replace('json', 'pdf'))
@@ -47,7 +47,7 @@ class PlotWriter(object):
         plt.plot([], [], ' ', label='mse_valid: {0:.2f}'.format(predictor.mse_valid))
         if self.config.test_split:
             plt.plot([], [], ' ', label='mse_test: {0:.2f}'.format(predictor.mse_test))
-        plt.legend(loc='lower left')
+        plt.legend()
 
         plt.title('Forecast for ' + predictor.basename)
         plt.savefig(self.config.fig_prefix + predictor.basename.replace('.json', '_detail.pdf'))
