@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+import pdb
 
 class PlotWriter(object):
     """docstring for PlotWriter"""
@@ -10,7 +10,7 @@ class PlotWriter(object):
 
     def write(self, predictor):
         plt.plot(list(range(len(predictor.data_all))), predictor.data_all, 'b', label='true')
-        plt.plot(list(range(predictor.n_train)), predictor.pred_train, 'g', label='pred_train')
+        plt.plot(list(range(self.config.n_predict_step, predictor.n_train)), predictor.pred_train, 'g', label='pred_train')
         plt.plot(list(range(predictor.n_train, len(predictor.data))), predictor.pred_valid, 'r', label='pred_valid')
         plt.plot(list(range(len(predictor.data), len(predictor.data) + len(predictor.pred_test))), predictor.pred_test, 'c',
                  label='pred_test')
@@ -26,9 +26,9 @@ class PlotWriter(object):
         plt.close()
 
         plt.plot(list(range(len(predictor.data_all))), predictor.data_all, 'b', label='true')
-        plt.plot(list(range(predictor.n_train)), predictor.pred_train, 'g', label='pred_train')
-        plt.plot(list(range(predictor.n_train)), predictor.pred_train_lower, 'darkgreen', label='pred_train_lower')
-        plt.plot(list(range(predictor.n_train)), predictor.pred_train_upper, 'lime', label='pred_train_upper')
+        plt.plot(list(range(self.config.n_predict_step, predictor.n_train)), predictor.pred_train, 'g', label='pred_train')
+        plt.plot(list(range(self.config.n_predict_step, predictor.n_train)), predictor.pred_train_lower, 'darkgreen', label='pred_train_lower')
+        plt.plot(list(range(self.config.n_predict_step, predictor.n_train)), predictor.pred_train_upper, 'lime', label='pred_train_upper')
         plt.plot(list(range(predictor.n_train, len(predictor.data))), predictor.pred_valid, 'r', label='pred_valid')
         plt.plot(list(range(predictor.n_train, len(predictor.data))), predictor.pred_valid_lower, 'darkred',
                  label='pred_valid_lower')
