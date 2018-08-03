@@ -1,0 +1,12 @@
+{
+  "tld": "fao.org",
+  "where_to_download": {
+    "frequency": "dayofmonth:5",
+    "method": "get",
+    "file_type": "xls",
+    "template": "http://www.fao.org/fileadmin/templates/worldfood/Reports_and_docs/Food_price_indices_data_jul.xls",
+    "replication": {},
+    "identifier": "fao"
+  },
+  "how_to_process": "TS"
+}

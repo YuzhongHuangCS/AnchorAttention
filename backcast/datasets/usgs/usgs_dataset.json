@@ -1,0 +1,20 @@
+{
+  "where_to_download": {
+    "frequency": "daily",
+    "method": "get",
+    "file_type": "csv",
+    "template": "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime={date_start}%2000:00:00&endtime={date_end}%2023:59:59&minmagnitude=2.5&orderby=time",
+    "replication": {
+      "date_start": {
+        "format": "%Y%m%d",
+        "delta": -1
+      },
+      "date_end": {
+        "format": "%Y%m%d"
+      }
+    },
+    "identifier": "usgs",
+    "comment": "This dumb endpoint only returns at most 20,000 records. We will have to update starttime periodically to avoid this pitfall."
+  },
+  "how_to_process": "Event"
+}

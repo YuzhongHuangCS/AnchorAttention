@@ -1,0 +1,13 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method":"get",
+		"file_type":"csv",
+		"template": "http://www.quandl.com/api/v3/datasets/LME/PR_PB.csv?start_date={start_date}",
+		"replication": {
+			"start_date": {"format": "%Y-%m-%d","delta":-1}
+		},
+		"identifier": "usleadprice"
+	},
+	"how_to_process": "Event"
+}

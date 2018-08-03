@@ -1,0 +1,19 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"template": "http://maps.clb.org.hk/api.v5/strikes/{date_start}/{date_end}/export?_lang=en",
+		"replication": {
+			"date_start": {
+				"format": "%Y%m",
+				"delta": -30
+			}, 
+			"date_end": {
+				"format": "%Y%m"
+			}
+		},
+		"identifier": "chinastrikes",
+		"comments": "",
+		"file_type": "xlsx"
+	},
+	"how_to_process": "Event"
+}

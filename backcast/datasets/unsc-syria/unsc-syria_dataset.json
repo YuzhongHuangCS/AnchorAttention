@@ -1,0 +1,16 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method": "get",
+		"file_type":"shtml",
+		"template": "https://en.wikipedia.org/wiki/List_of_vetoed_United_Nations_Security_Council_resolutions",
+		"replication": {
+		},
+		"identifier": "unsc-syria"
+	},
+	"how_to_process": "custom",
+	"custom": ["wrapper"],
+	"tld": "wikipedia.org"
+}
+
+

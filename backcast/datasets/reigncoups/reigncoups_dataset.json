@@ -1,0 +1,12 @@
+{
+  "where_to_download": {
+    "frequency": "dayofmonth:1",
+    "template": "https://docs.google.com/spreadsheets/d/1mrtORyhXw9TJMBYLAGPrikA4VDpla_Eq7L-NsEQ5VXg/pub?output=xlsx",
+    "method":"get",
+    "file_type":"xlsx",
+    "identifier": "reigncoups",
+    "comments": ""
+  },
+  "how_to_process": "Event",
+  "tld":"oefresearch.org"
+}

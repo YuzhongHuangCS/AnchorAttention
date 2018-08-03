@@ -1,0 +1,12 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method":"get",
+		"file_type":"csv",
+		"template": "https://www.privacyrights.org/data-breaches/Privacy_Rights_Clearinghouse-Data-Breaches-Export.csv?title=&taxonomy_vocabulary_11_tid%5B0%5D=2436",
+		"replication": {},
+		"identifier": "privacyrights",
+		"comments": "The 2436 portion of the URL is privacyrights' magic number for the year. On January 1, 2019 we will have to go to PR and find the magic number for that year and update it."
+	},
+	"how_to_process": "Event"
+}

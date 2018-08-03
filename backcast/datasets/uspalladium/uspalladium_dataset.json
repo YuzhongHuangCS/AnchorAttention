@@ -1,0 +1,13 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method": "get",
+		"template": "http://www.quandl.com/api/v3/datasets/LPPM/PALL.csv?start_date={start_date}",
+		"replication": {
+			"start_date": {"format": "%Y-%m-%d","delta":-1}
+		},
+		"identifier": "uspallidium",
+		"file_type": "csv"
+	},
+	"how_to_process": "Event"
+}

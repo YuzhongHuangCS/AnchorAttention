@@ -1,0 +1,16 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method":"get",
+		"file_type":"csv",
+		"template": "https://www.quandl.com/api/v3/datasets/CHRIS/SGX_FEF1.csv?start_date={date_start}",
+		"replication": {
+			"date_start": {
+				"format": "%Y-%m-%d",
+				"delta": -1
+			}
+		},
+		"identifier": "sgxironprice"
+	},
+	"how_to_process": "Event"
+}

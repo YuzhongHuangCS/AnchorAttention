@@ -1,0 +1,16 @@
+{
+  "where_to_download": {
+    "frequency": "daily",
+    "template": "https://api.acleddata.com/acled/read.csv?event_date={event_date}",
+    "method": "get",
+    "file_type": "csv",
+    "replication": {
+      "event_date": {
+        "format": "%Y-%m-%d",
+        "delta": -2
+      }
+    },
+    "identifier": "acleddata"
+  },
+  "how_to_process": "Event"
+}

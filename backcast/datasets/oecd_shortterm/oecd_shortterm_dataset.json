@@ -1,0 +1,20 @@
+{
+    "where_to_download": {
+        "frequency": "dayofmonth:15",
+        "method": "get",
+        "template": "https://stats.oecd.org/sdmx-json/data/DP_LIVE/.STINT.TOT.PC_PA.M/OECD?contentType=csv&detail=code&separator=comma&csv-lang=en&startPeriod={start_date}&endPeriod={end_date}",
+        "replication":{
+          "start_date":{
+            "format": "%Y-%m",
+            "delta": -30
+          },
+          "end_date": {
+            "format": "%Y-%m"
+          }
+        },
+        "identifier": "ShortTermInterestRate",
+        "file_type": "csv"
+    },
+    "how_to_process": "Event"
+}
+

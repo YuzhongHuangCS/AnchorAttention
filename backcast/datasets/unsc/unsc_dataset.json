@@ -1,0 +1,17 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method": "get",
+		"file_type":"html",
+		"template": "http://www.un.org/en/sc/documents/resolutions/{year}.shtml",
+		"replication": {"year": {
+				"format": "%Y"
+			}
+		},
+		"identifier": "unsc"
+	},
+	"how_to_process": "custom",
+	"custom": ["wrapper"]
+}
+
+

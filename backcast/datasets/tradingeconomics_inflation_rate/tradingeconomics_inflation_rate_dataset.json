@@ -1,0 +1,19 @@
+{
+  "where_to_download": {
+    "frequency": "quarterly",
+    "method": "get",
+    "file_type": "csv",
+    "template": "https://api.tradingeconomics.com/historical/country/all/indicator/Inflation%20Rate/{date_start}/{date_end}?c=h5gsaw1lfiaezah:hmee4m9qqhrbh62&format=csv",
+    "replication": {
+      "date_start":{
+        "format": "%Y-%m-%d",
+        "delta": -92
+      },
+      "date_end":{
+        "format": "%Y-%m-%d"
+      }
+    },
+    "identifier": "inflation_rate"
+  },
+  "how_to_process": "Event"
+}

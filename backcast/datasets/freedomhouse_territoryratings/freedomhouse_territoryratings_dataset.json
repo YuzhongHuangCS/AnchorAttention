@@ -1,0 +1,16 @@
+{
+	"where_to_download": {
+		"frequency": "dayofmonth:1",
+		"method": "get",
+		"template": "https://freedomhouse.org/sites/default/files/FIW{year}_Data.zip",
+		"replication": {"year": {
+				"format": "%Y",
+				"delta": -1
+			}
+		},
+		"identifier": "freedomhouse_territoryratings",
+		"file_type": "zip",
+		"path_to_file_in_zip": "*/FH_Country_and_Territory_Ratings_and_Statuses_*.xls"
+	},
+	"how_to_process": "TS"
+}

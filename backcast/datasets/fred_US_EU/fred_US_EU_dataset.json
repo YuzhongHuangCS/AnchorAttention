@@ -1,0 +1,25 @@
+{
+  "tld": "stlouisfed.org",
+  "where_to_download": {
+    "frequency": "daily",
+    "method": "get",
+    "file_type": "csv",
+    "template": "https://fred.stlouisfed.org/graph/fredgraph.csv?chart_type=line&recession_bars=on&log_scales=&bgcolor=%23e1e9f0&graph_bgcolor=%23ffffff&fo=Open+Sans&ts=12&tts=12&txtcolor=%23444444&show_legend=yes&show_axis_titles=yes&drp=0&cosd={date_start}&coed={date_end}&height=450&stacking=&range=Custom&mode=fred&id={c1}&transformation=lin&nd=1999-01-04&ost=-99999&oet=99999&lsv=&lev=&mma=0&fml=a&fgst=lin&fgsnd=2009-06-01&fq=Daily&fam=avg&vintage_date=&revision_date=&line_color=%234572a7&line_style=solid&lw=2&scale=left&mark_type=none&mw=2&width=1168",
+    "replication": {
+      "date_start": {
+        "format": "%Y-%m-%d",
+        "delta": -2
+      },
+      "date_end": {
+        "format": "%Y-%m-%d"
+      },
+      "c1": {
+        "values": [
+          "DEXUSEU"
+        ]
+      }
+    },
+    "identifier": "fred"
+  },
+  "how_to_process": "TS"
+}

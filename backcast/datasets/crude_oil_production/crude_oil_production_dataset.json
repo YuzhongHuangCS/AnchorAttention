@@ -1,0 +1,19 @@
+{
+  "where_to_download": {
+    "frequency": "dayofmonth:1",
+    "template": "https://api.tradingeconomics.com/historical/country/all/indicator/Crude%20Oil%20Production/{date_start}/{date_end}?c=h5gsaw1lfiaezah:hmee4m9qqhrbh62&format=csv",
+    "method": "get",
+    "file_type": "csv",
+    "replication": {
+      "date_start": {
+        "format": "%Y-%m-%d",
+        "delta": -4
+      },
+      "date_end": {
+        "format": "%Y-%m-%d"
+      }
+    },
+    "identifier": "crude_oil"
+  },
+  "how_to_process": "Event"
+}

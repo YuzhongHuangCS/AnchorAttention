@@ -1,0 +1,23 @@
+{
+  "where_to_download": {
+    "frequency": "daily",
+    "method": "get",
+    "file_type": "json",
+    "template": "http://api.eia.gov/series?series_id=PET.RBRTE.D&api_key=5c444b278ff431a31037ba48808c3144&out=json&start={date_start}&end={date_end}",
+    "replication": {
+      "date_start":{
+        "format": "%Y%m%d",
+        "delta": -5
+      },
+      "date_end":{
+        "format": "%Y%m%d"
+      }
+    },
+    "identifier": "eia_crude_oil"
+  },
+  "how_to_process": "custom",
+  "custom": [
+    "convert_to_ts_output"
+  ],
+  "tld": "eia.gov"
+}

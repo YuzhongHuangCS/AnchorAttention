@@ -1,0 +1,20 @@
+{
+  "where_to_download": {
+    "frequency": "never",
+    "template": "http://eventdata.parusanalytics.com/data.dir/pitf.world.{year}",
+    "replication": {
+      "year": {
+        "format": "",
+        "values": [
+          "19950101-20121231.xls.zip",
+          "20130101-20151231.xls.zip",
+          "20160101-20170930.xlsx.zip"
+        ]
+      }
+    },
+    "identifier": "pitf",
+    "file_type": "zip",
+    "path_to_file_in_zip": "pitf.world.*"
+  },
+  "how_to_process": "Event"
+}

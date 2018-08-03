@@ -1,0 +1,11 @@
+{
+	"where_to_download": {
+		"frequency": "dayofmonth:1",
+		"method":"get",
+		"file_type":"csv",
+		"template": "http://popstats.unhcr.org/en/asylum_seekers_monthly.csv",
+		"replication": {},
+		"identifier": "unhcr"
+	},
+	"how_to_process": "Event"
+}

@@ -19,7 +19,7 @@ class Config(object):
         self.n_output_dim = 3
         self.n_patience = 100
         self.n_lr_decay = 5
-        self.lr = 1e-3
+        self.lr = 1e-2
         self.lr_decay = 0.95
         self.max_valid = 10
         self.valid_loss_weight = 0.5

@@ -1,0 +1,19 @@
+{
+  "tld": "nhk.or.jp",
+  "where_to_download": {
+    "frequency": "daily",
+    "template": "https://www.nhk.or.jp/bunken/research/yoron/political/{year}.html",
+    "method": "get",
+    "file_type": "html",
+    "replication": {
+      "year": {
+        "format": "%Y"
+      }
+    },
+    "identifier": "NHK"
+  },
+  "how_to_process": "custom",
+  "custom": [
+    "scrNHK"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+	"tld": "colorado.edu",
+	"where_to_download": {
+		"frequency": "dayofmonth:1,8,15,22",
+		"method": "post",
+        "post":{},
+		"file_type":"csv",
+		"template": "ftp://sidads.colorado.edu/DATASETS/NOAA/G02186/masie_4km_allyears_extent_sqkm.csv",
+		"replication": {},
+		"identifier": "seaice"
+	},
+	"how_to_process": "TS"
+}

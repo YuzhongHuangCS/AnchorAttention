@@ -1,0 +1,11 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method":"get",
+		"file_type":"xlsx",
+		"template": "https://docs.google.com/spreadsheets/d/1_QY-l4xhMu5nZVluprOgRs6rUzgkkBemapdsg5lFzKU/pub?output=xlsx",
+		"identifier": "bokoharam",
+		"comments": "TBD"
+	},
+	"how_to_process": "Event"
+}

@@ -1,0 +1,11 @@
+{
+	"where_to_download": {
+		"frequency": "dayofmonth:1",
+		"template": "http://www.forschungsgruppe.de/Umfragen/Politbarometer/Langzeitentwicklung_-_Themen_im_Ueberblick/Politik_I/1_Projektion.xlsx",
+		"replication": {},
+		"identifier": "forschunggruppe",
+		"comments": "",
+		"file_type": "xlsx"
+	},
+	"how_to_process": "TS"
+}

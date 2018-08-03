@@ -1,0 +1,19 @@
+{
+	"where_to_download": {
+		"frequency": "dayofmonth:1",
+        "template": "http://api.tradingeconomics.com/historical/country/all/indicator/consumer%20price%20index%20cpi/{date_start}-01/{date_end}-01?c=h5gsaw1lfiaezah:hmee4m9qqhrbh62&f=csv",
+		"replication":{
+          "date_start":{
+            "format": "%Y-%m",
+            "delta": -90
+          },
+          "date_end": {
+            "format": "%Y-%m"
+          }
+        },
+		"identifier": "imfCPI",
+		"file_type": "csv",
+		"comments": "This is the IMF Cross Country Consumer Index."
+	},
+	"how_to_process": "Event"
+}

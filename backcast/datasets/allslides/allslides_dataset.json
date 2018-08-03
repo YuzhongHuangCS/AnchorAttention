@@ -1,0 +1,20 @@
+{
+	"where_to_download": {
+		"frequency": "daily",
+		"method": "get",
+		"file_type":"shtml",
+		"template": "https://www.allsides.com/media-bias/media-bias-ratings?page={page_number}",
+		"replication": {
+			"page_number": {
+				"format": "",
+				"values": [ "0","1","2","3","4","5"]
+			}
+		},
+		"identifier": "allslides"
+	},
+	"how_to_process": "custom",
+	"custom": ["wrapper"],
+	"tld": "allsides.com"
+}
+
+
