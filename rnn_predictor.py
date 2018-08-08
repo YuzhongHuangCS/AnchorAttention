@@ -82,16 +82,16 @@ class RNNPredictor(object):
         # build network
         batchX_placeholder = tf.placeholder(tf.float32, [n_total, self.config.n_input_dim])
 
-        W1 = tf.get_variable('W1', shape=(self.config.n_neurons, self.config.n_dense_dim))
+        W1 = tf.get_variable('W1', shape=(self.config.n_neurons, self.config.n_dense_dim), initializer=tf.glorot_uniform_initializer())
         b1 = tf.get_variable('b1', shape=(1, self.config.n_dense_dim), initializer=tf.zeros_initializer())
-        W2 = tf.get_variable('W2', shape=(self.config.n_dense_dim, self.config.n_output_dim))
+        W2 = tf.get_variable('W2', shape=(self.config.n_dense_dim, self.config.n_output_dim), initializer=tf.glorot_uniform_initializer())
         b2 = tf.get_variable('b2', shape=(1, self.config.n_output_dim), initializer=tf.zeros_initializer())
 
         # Unpack columns
         inputs_series = tf.reshape(batchX_placeholder, (1, -1, 1))
 
         # Forward passes
-        cell = tf.nn.rnn_cell.GRUCell(self.config.n_neurons)
+        cell = tf.nn.rnn_cell.GRUCell(self.config.n_neurons, kernel_initializer=tf.orthogonal_initializer(), bias_initializer=tf.zeros_initializer())
         cell_state = cell.zero_state(self.config.n_batch, dtype=tf.float32)
 
         states_series, current_state = tf.nn.dynamic_rnn(cell, inputs_series, initial_state=cell_state, parallel_iterations=1)
